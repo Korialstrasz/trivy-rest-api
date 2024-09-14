@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 
 /**
  * Service to call the trivy cli
@@ -23,10 +22,8 @@ public class Trivy {
      *
      * @param command Command to be executed
      * @return return the trivy console output
-     * @throws IOException
-     * @throws InterruptedException
      */
-    public TrivyResult call(TrivyCommand command) throws InterruptedException {
+    public TrivyResult call(TrivyCommand command) {
         try {
             ProcessBuilder processBuilder = new ProcessBuilder();
             processBuilder.command("sh", "-c", "trivy " + command.asString());
@@ -36,16 +33,13 @@ public class Trivy {
 
             int returnCode = process.waitFor();
 
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             StringBuilder result = new StringBuilder();
-
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                result.append(line).append("\n");
+            try (BufferedReader bufferedReader = process.inputReader();) {
+                bufferedReader.lines().forEach(l -> result.append(l).append("\n"));
             }
 
-            return TrivyResult.of(result.toString(), returnCode != 0);
-        } catch (IOException e) {
+            return TrivyResult.of(result.toString(), returnCode == 0);
+        } catch (IOException | InterruptedException e) {
             LOGGER.error("Could not run trivy command. %s".formatted(command.asString()), e);
             return TrivyResult.failed(e.getMessage());
         }
