@@ -1,12 +1,10 @@
 package de.dandy.trivyrestapi.trivy;
 
-import ch.qos.logback.core.net.SyslogOutputStream;
-import de.dandy.trivyrestapi.trivy.command.UpdateCommand;
+import de.dandy.trivyrestapi.trivy.command.UpdateDbCommand;
+import de.dandy.trivyrestapi.trivy.command.UpdateJavaDbCommand;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
-import java.io.IOException;
 
 @Service
 public class UpdateSchedule implements SmartLifecycle {
@@ -27,13 +25,14 @@ public class UpdateSchedule implements SmartLifecycle {
     @Override
     public void start() {
         Thread.startVirtualThread(() -> {
-            try {
-                System.out.println("Update");
-                trivy.call(new UpdateCommand());
-                System.out.println("Update finished");
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+            System.out.println("Update db");
+            trivy.call(new UpdateDbCommand());
+            System.out.println("Update db finished");
+        });
+        Thread.startVirtualThread(() -> {
+            System.out.println("Update java db");
+            trivy.call(new UpdateJavaDbCommand());
+            System.out.println("Update java db finished");
         });
     }
 
