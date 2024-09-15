@@ -26,32 +26,17 @@ public class ImageApi {
     }
 
     /**
-     * Default Scan of an Image
-     * <ul>
-     *     <li>Format: JSON</li>
-     *     <li>Report: All Vulns</li>
-     * </ul>
-     *
-     * @param image Name of the image
-     * @return trivy output
-     */
-    @GetMapping(value = "/{image}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> scan(@PathVariable String image) {
-
-        TrivyResult result = trivy.call(new ImageCommand(image, "json"));
-
-        return ResponseEntity.status(result.isSuccess() ? 200 : 409).body(result.getResult());
-    }
-
-    /**
      * Scan an image with trivy with format option.
      *
      * @param image  image name
      * @param format Supported options <code>json</code> and <code>cyclonedx</code>
      * @return trivy output
      */
-    @GetMapping(value = "/{image}/{format}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> formatedScan(@PathVariable String image, @PathVariable String format) {
+    @GetMapping(value = "{*image}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> formatedScan(@PathVariable String image, @RequestParam(required = false) String format) {
+
+        // as {*image} also captures the leading '/' it has to be cut off
+        image = image.startsWith("/") ? image.substring(1) : image;
 
         String saveFormat = "json";
         if (format != null) {
@@ -66,8 +51,11 @@ public class ImageApi {
         return ResponseEntity.status(result.isSuccess() ? HttpStatus.OK.value() : HttpStatus.CONFLICT.value()).body(result.getResult());
     }
 
-    @GetMapping(value = "has-vulns/{image}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Boolean> hasVulns(@PathVariable String image) {
+    @GetMapping(value = "has-vulns/{*image}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Boolean> hasVulns(@PathVariable String image, @RequestParam(required = false) String severity) {
+        // as {*image} also captures the leading '/' it has to be cut off
+        image = image.startsWith("/") ? image.substring(1) : image;
+
         TrivyResult result = trivy.call(new ImageCommand(image, "json"));
 
         return ResponseEntity.status(result.isSuccess() ? HttpStatus.OK.value() : HttpStatus.CONFLICT.value()).body(result.hasVulns());
