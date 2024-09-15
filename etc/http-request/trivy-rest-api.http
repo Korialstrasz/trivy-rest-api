@@ -1,1 +1,11 @@
+###
+# @name Scan image
 GET localhost:8080/image/alpine:3.10
+
+###
+#@name Scan image and return cyclonedx answer
+GET localhost:8080/image/alpine:3.10?format=cyclonedx
+
+###
+#@name Scan image with sub path
+GET localhost:8080/image/ghcr.io/graalvm/native-image:java11-21.2
